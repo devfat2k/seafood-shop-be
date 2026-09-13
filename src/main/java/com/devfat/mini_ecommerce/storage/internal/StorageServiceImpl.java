@@ -122,10 +122,14 @@ public class StorageServiceImpl implements StorageService {
             throw new RuntimeException(e);
         }
 
-        String baseUrl = StringUtils.trimTrailingCharacter(
-                (publicUrl != null && !publicUrl.isBlank()) ? publicUrl.trim() : endPoint.trim(),
-                '/'
-        );
+        if (publicUrl != null && !publicUrl.isBlank()) {
+            String trimmedPublicUrl = StringUtils.trimTrailingCharacter(publicUrl.trim(), '/');
+            if (trimmedPublicUrl.contains("r2.dev") || !trimmedPublicUrl.contains("localhost")) {
+                return trimmedPublicUrl + "/" + objectName;
+            }
+            return trimmedPublicUrl + "/" + bucketName + "/" + objectName;
+        }
+        String baseUrl = StringUtils.trimTrailingCharacter(endPoint.trim(), '/');
         return baseUrl + "/" + bucketName + "/" + objectName;
     }
 }
