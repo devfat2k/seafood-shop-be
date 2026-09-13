@@ -7,6 +7,7 @@ import com.devfat.mini_ecommerce.home.herobanner.dto.UpdateHeroBannerRequestDto;
 import com.devfat.mini_ecommerce.shared.exception.ResourceNotFoundException;
 import com.devfat.mini_ecommerce.storage.StorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,6 +48,7 @@ public class HeroBannerServiceImpl implements HeroBannerService {
     }
 
     @Override
+    @CacheEvict(value = "home:heroSlides", allEntries = true)
     @Transactional
     public HeroBannerResponseDto create(CreateHeroBannerRequestDto request) {
         if(request == null) throw new IllegalArgumentException("request is null");
@@ -56,6 +58,7 @@ public class HeroBannerServiceImpl implements HeroBannerService {
     }
 
     @Override
+    @CacheEvict(value = "home:heroSlides", allEntries = true)
     @Transactional
     public HeroBannerResponseDto update(Long id, UpdateHeroBannerRequestDto request) {
         HeroBannerEntity heroBannerEntity = heroBannerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Banner not found"));
@@ -66,6 +69,7 @@ public class HeroBannerServiceImpl implements HeroBannerService {
     }
 
     @Override
+    @CacheEvict(value = "home:heroSlides", allEntries = true)
     @Transactional
     public void delete(Long id) {
         heroBannerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Banner not found"));
@@ -73,6 +77,7 @@ public class HeroBannerServiceImpl implements HeroBannerService {
     }
 
     @Override
+    @CacheEvict(value = "home:heroSlides", allEntries = true)
     @Transactional
     public void toggleBannerActive(Long id) {
         HeroBannerEntity heroBannerEntity = heroBannerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Banner not found"));
@@ -82,6 +87,8 @@ public class HeroBannerServiceImpl implements HeroBannerService {
     }
 
     @Override
+    @CacheEvict(value = "home:heroSlides", allEntries = true)
+    @Transactional
     public HeroBannerResponseDto uploadBannerImage(Long id, MultipartFile file) {
         HeroBannerEntity heroBannerEntity = heroBannerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Banner not found"));
 

@@ -37,17 +37,20 @@ public class VNPayUtil {
         }
     }
 
-    // Lấy IP thật của client — copy từ Config.getIpAddress() gốc
+    // Lấy IP thật của client — hỗ trợ môi trường chạy sau Reverse Proxy / Cloudflare / Render
     public static String getIpAddress(HttpServletRequest request) {
         String ip = request.getHeader("X-FORWARDED-FOR");
-        if (ip == null || ip.isEmpty()) {
-            ip = request.getRemoteAddr();
+        if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0].trim();
         }
-        return ip;
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank() && !"unknown".equalsIgnoreCase(realIp)) {
+            return realIp.trim();
+        }
+        return request.getRemoteAddr();
     }
 
-    // Build cả query string (cho URL) VÀ hashData (để ký) trong 1 lần duyệt
-    // Copy đúng logic vòng lặp trong ajaxServlet.java — chú ý URLEncoder ở CẢ 2 bên
+    // Build cả query string (cho URL) VÀ hashData (để ký) chuẩn UTF-8
     public static Map<String, String> buildQueryAndHash(Map<String, String> params, String secretKey) {
         List<String> fieldNames = new ArrayList<>(params.keySet());
         Collections.sort(fieldNames);   // BẮT BUỘC sort trước khi ký
@@ -55,19 +58,20 @@ public class VNPayUtil {
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
 
-        Iterator<String> itr = fieldNames.iterator();
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
+        for (String fieldName : fieldNames) {
             String fieldValue = params.get(fieldName);
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName).append('=')
-                        .append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII)).append('=')
-                        .append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-                if (itr.hasNext()) {
+                if (hashData.length() > 0) {
                     hashData.append('&');
+                }
+                hashData.append(fieldName).append('=')
+                        .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
+
+                if (query.length() > 0) {
                     query.append('&');
                 }
+                query.append(URLEncoder.encode(fieldName, StandardCharsets.UTF_8)).append('=')
+                        .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
             }
         }
 
@@ -81,7 +85,7 @@ public class VNPayUtil {
 
     public static boolean verifySignature(Map<String, String> params, String secretKey) {
         String vnp_SecureHash = params.get("vnp_SecureHash");
-        if (vnp_SecureHash == null) {
+        if (vnp_SecureHash == null || vnp_SecureHash.isBlank()) {
             return false; // Nếu request không có chữ ký, chắc chắn là không hợp lệ
         }
 
@@ -93,26 +97,19 @@ public class VNPayUtil {
         Collections.sort(fieldNames);
 
         StringBuilder hashData = new StringBuilder();
-        Iterator<String> itr = fieldNames.iterator();
-
-
-        while (itr.hasNext()) {
-            String fieldName = itr.next();
+        for (String fieldName : fieldNames) {
             String fieldValue = cleanParams.get(fieldName);
-
             if (fieldValue != null && !fieldValue.isEmpty()) {
-                hashData.append(fieldName).append('=')
-                        .append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII));
-
-                // Nếu chưa phải tham số cuối cùng thì thêm dấu &
-                if (itr.hasNext()) {
+                if (hashData.length() > 0) {
                     hashData.append('&');
                 }
+                hashData.append(fieldName).append('=')
+                        .append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8));
             }
         }
 
         String mySecureHash = hmacSHA512(secretKey, hashData.toString());
 
-        return mySecureHash.equals(vnp_SecureHash);
+        return mySecureHash.equalsIgnoreCase(vnp_SecureHash);
     }
 }

@@ -102,7 +102,8 @@ public class StorageServiceImpl implements StorageService {
         fileValidationUtil.validateImageFile(file);
 
         String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-        String objectName = folder + "/" + UUID.randomUUID() + "." + extension;
+        String cleanExtension = (extension != null && !extension.isBlank()) ? extension.toLowerCase() : "jpg";
+        String objectName = folder + "/" + UUID.randomUUID() + "." + cleanExtension;
         try {
             byte[] dataToUpload = resizeImage
                     ? resizeImage(file)
@@ -122,10 +123,14 @@ public class StorageServiceImpl implements StorageService {
             throw new RuntimeException(e);
         }
 
-        String baseUrl = StringUtils.trimTrailingCharacter(
-                (publicUrl != null && !publicUrl.isBlank()) ? publicUrl.trim() : endPoint.trim(),
-                '/'
-        );
+        if (publicUrl != null && !publicUrl.isBlank()) {
+            String trimmedPublicUrl = StringUtils.trimTrailingCharacter(publicUrl.trim(), '/');
+            if (trimmedPublicUrl.contains("r2.dev") || !trimmedPublicUrl.contains("localhost")) {
+                return trimmedPublicUrl + "/" + objectName;
+            }
+            return trimmedPublicUrl + "/" + bucketName + "/" + objectName;
+        }
+        String baseUrl = StringUtils.trimTrailingCharacter(endPoint.trim(), '/');
         return baseUrl + "/" + bucketName + "/" + objectName;
     }
 }

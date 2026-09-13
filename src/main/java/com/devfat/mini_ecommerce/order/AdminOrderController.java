@@ -36,7 +36,7 @@ public class AdminOrderController {
     @Operation(summary = "Filter orders", description = "Filter orders by user ID and order status.")
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<PageResponse<OrderResponseDto>>> getAllOrders(
-            @RequestParam(required = false) Long userId,
+            @PathVariable(name = "userId") Long userId,
             @RequestParam(required = false) OrderStatus status,
             Pageable pageable
     ) {

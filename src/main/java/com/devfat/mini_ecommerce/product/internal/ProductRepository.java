@@ -36,23 +36,25 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long>, J
     @Query("SELECT " +
             " p.name as name," +
             " p.price as price," +
-            " COALESCE(SUM(oi.quantity), 0) as mostBuy" +
+            " COALESCE(SUM(CASE WHEN o.status IN (com.devfat.mini_ecommerce.order.OrderStatus.CONFIRMED, com.devfat.mini_ecommerce.order.OrderStatus.SHIPPED, com.devfat.mini_ecommerce.order.OrderStatus.DONE) THEN oi.quantity ELSE 0 END), 0) as mostBuy" +
             " FROM ProductEntity p " +
             " LEFT JOIN p.orderItems oi" +
+            " LEFT JOIN oi.order o" +
             " GROUP BY  p.id, p.name, p.price " +
-            " ORDER BY  COALESCE(SUM(oi.quantity), 0) DESC")
+            " ORDER BY  COALESCE(SUM(CASE WHEN o.status IN (com.devfat.mini_ecommerce.order.OrderStatus.CONFIRMED, com.devfat.mini_ecommerce.order.OrderStatus.SHIPPED, com.devfat.mini_ecommerce.order.OrderStatus.DONE) THEN oi.quantity ELSE 0 END), 0) DESC")
     List<TopProductView> getTopViewProduct(Pageable pageable);
 
     interface CategoryRevenueView {
         String getName();
         BigDecimal getRevenue();
     }
-    @Query("SELECT c.name as name, COALESCE(SUM(oi.unitPrice * oi.quantity), 0) as revenue" +
+    @Query("SELECT c.name as name, COALESCE(SUM(CASE WHEN o.status IN (com.devfat.mini_ecommerce.order.OrderStatus.CONFIRMED, com.devfat.mini_ecommerce.order.OrderStatus.SHIPPED, com.devfat.mini_ecommerce.order.OrderStatus.DONE) THEN oi.unitPrice * oi.quantity ELSE 0 END), 0) as revenue" +
             " FROM CategoryEntity c" +
             " LEFT JOIN c.products p" +
             " LEFT JOIN p.orderItems oi" +
+            " LEFT JOIN oi.order o" +
             " GROUP BY  c.id, c.name" +
-            " ORDER BY  COALESCE(SUM(oi.unitPrice * oi.quantity), 0) DESC")
+            " ORDER BY  COALESCE(SUM(CASE WHEN o.status IN (com.devfat.mini_ecommerce.order.OrderStatus.CONFIRMED, com.devfat.mini_ecommerce.order.OrderStatus.SHIPPED, com.devfat.mini_ecommerce.order.OrderStatus.DONE) THEN oi.unitPrice * oi.quantity ELSE 0 END), 0) DESC")
     List<CategoryRevenueView> getCategoryRevenue(Pageable pageable);
 
     interface MonthlyRevenueView {
@@ -62,6 +64,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long>, J
     @Query("  SELECT DATE_TRUNC('month', o.createdAt) as month, COALESCE(SUM(oi.unitPrice * oi.quantity) , 0) as revenue" +
             " FROM OrderEntity o " +
             " LEFT JOIN o.items oi" +
+            " WHERE o.status IN (com.devfat.mini_ecommerce.order.OrderStatus.CONFIRMED, com.devfat.mini_ecommerce.order.OrderStatus.SHIPPED, com.devfat.mini_ecommerce.order.OrderStatus.DONE)" +
             " GROUP BY DATE_TRUNC('month', o.createdAt)" +
             " ORDER BY DATE_TRUNC('month', o.createdAt) DESC")
     List<MonthlyRevenueView> getMonthlyRevenue();

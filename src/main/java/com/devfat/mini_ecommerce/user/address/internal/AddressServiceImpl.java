@@ -13,6 +13,7 @@ import com.devfat.mini_ecommerce.user.address.exception.CannotDeleteOnlyAddressE
 import com.devfat.mini_ecommerce.user.internal.UserEntity;
 import com.devfat.mini_ecommerce.user.internal.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,6 +75,10 @@ public class AddressServiceImpl implements AddressService {
         userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         UserAddressEntity userAddress = addressRepository.findById(addressId).orElseThrow(() -> new ResourceNotFoundException("Address not found!"));
 
+        if (!userAddress.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("Access denied. This address does not belong to you!");
+        }
+
         addressMapper.updateEntityFromDto(updateAddressRequestDto, userAddress);
         return addressMapper.toResponseDto(addressRepository.save(userAddress));
     }
@@ -83,6 +88,10 @@ public class AddressServiceImpl implements AddressService {
     public void deleteAddress(Long userId, Long addressId) {
         userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         UserAddressEntity userAddressEntity = addressRepository.findById(addressId).orElseThrow(() -> new ResourceNotFoundException("Address not found!"));
+
+        if (!userAddressEntity.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("Access denied. This address does not belong to you!");
+        }
 
         List<UserAddressEntity> userAddressOld = addressRepository.findByUserId(userId);
 
@@ -102,6 +111,10 @@ public class AddressServiceImpl implements AddressService {
     public void changeDefaultAddress(Long userId, Long addressId, ChangeDefaultAddressDto changeDefaultAddressDto) {
         userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found!"));
         UserAddressEntity userAddress = addressRepository.findById(addressId).orElseThrow(() -> new ResourceNotFoundException("Address not found!"));
+
+        if (!userAddress.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("Access denied. This address does not belong to you!");
+        }
 
         if (!changeDefaultAddressDto.defaultAddress()) {
             throw new BadRequestException("Cannot disable default address status. Please set another address as default instead.");

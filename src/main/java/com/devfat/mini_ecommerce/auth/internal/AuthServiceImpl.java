@@ -87,7 +87,8 @@ public class AuthServiceImpl implements AuthService {
         newUser.setPhoneNumber(phone);
 
         RoleEntity defaultRole = roleRepository.findByName("ROLE_USER")
-                .orElseGet(() -> roleRepository.findByName("USER").orElse(null));
+                .orElseGet(() -> roleRepository.findByName("USER")
+                        .orElseGet(() -> roleRepository.findByName("CUSTOMER").orElse(null)));
         if (defaultRole != null) {
             newUser.getRoles().add(defaultRole);
         }
