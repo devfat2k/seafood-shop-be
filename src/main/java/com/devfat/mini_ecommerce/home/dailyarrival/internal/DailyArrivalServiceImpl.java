@@ -8,7 +8,9 @@ import com.devfat.mini_ecommerce.product.internal.ProductEntity;
 import com.devfat.mini_ecommerce.product.internal.ProductRepository;
 import com.devfat.mini_ecommerce.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +31,8 @@ public class DailyArrivalServiceImpl implements DailyArrivalService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "home:dailyArrivals", allEntries = true)
     public DailyArrivalResponseDto create(CreateDailyArrivalRequestDto request) {
         if(request == null) throw new IllegalArgumentException("Request is null");
 
@@ -43,6 +47,8 @@ public class DailyArrivalServiceImpl implements DailyArrivalService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "home:dailyArrivals", allEntries = true)
     public DailyArrivalResponseDto update(Long id, UpdateDailyArrivalRequestDto request) {
         if(request == null) throw new IllegalArgumentException("Request is null");
 
@@ -54,6 +60,8 @@ public class DailyArrivalServiceImpl implements DailyArrivalService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "home:dailyArrivals", allEntries = true)
     public void delete(Long id) {
         if(id == null) throw new IllegalArgumentException("id is null");
 

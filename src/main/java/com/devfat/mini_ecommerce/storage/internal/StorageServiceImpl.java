@@ -102,7 +102,8 @@ public class StorageServiceImpl implements StorageService {
         fileValidationUtil.validateImageFile(file);
 
         String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-        String objectName = folder + "/" + UUID.randomUUID() + "." + extension;
+        String cleanExtension = (extension != null && !extension.isBlank()) ? extension.toLowerCase() : "jpg";
+        String objectName = folder + "/" + UUID.randomUUID() + "." + cleanExtension;
         try {
             byte[] dataToUpload = resizeImage
                     ? resizeImage(file)

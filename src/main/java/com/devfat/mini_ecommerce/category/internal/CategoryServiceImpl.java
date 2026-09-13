@@ -83,6 +83,8 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @CacheEvict(value = "home:categories", allEntries = true)
+    @Transactional
     public CategoryResponseDto uploadCategoryImage(Long id, MultipartFile file) {
         CategoryEntity category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category is not found. id = " + id));
 

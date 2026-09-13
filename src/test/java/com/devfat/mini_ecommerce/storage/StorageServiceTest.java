@@ -92,4 +92,24 @@ class StorageServiceTest {
 
         assertTrue(resultUrl.startsWith("http://minio:9000/mini-ecommerce/bannerHeroImage/"));
     }
+
+    @Test
+    @DisplayName("Should normalize uppercase file extension and handle files without extension")
+    void shouldNormalizeFileExtensions() throws Exception {
+        ReflectionTestUtils.setField(storageService, "publicUrl", "http://localhost:9000");
+
+        MockMultipartFile fileUppercase = new MockMultipartFile(
+                "file", "PHOTO.PNG", "image/png", new byte[]{1, 2, 3}
+        );
+        doNothing().when(fileValidationUtil).validateImageFile(fileUppercase);
+        String urlUpper = storageService.uploadFile(fileUppercase, "productImage", false);
+        assertTrue(urlUpper.endsWith(".png"));
+
+        MockMultipartFile fileNoExt = new MockMultipartFile(
+                "file", "avatar", "image/jpeg", new byte[]{1, 2, 3}
+        );
+        doNothing().when(fileValidationUtil).validateImageFile(fileNoExt);
+        String urlNoExt = storageService.uploadFile(fileNoExt, "productImage", false);
+        assertTrue(urlNoExt.endsWith(".jpg"));
+    }
 }

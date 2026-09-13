@@ -146,18 +146,30 @@ public class PaymentServiceImpl implements PaymentService {
 
         // Bước 4: Đọc vnp_ResponseCode để biết giao dịch thành công hay thất bại
         String responseCode = params.get("vnp_ResponseCode");
+        String transactionNo = params.get("vnp_TransactionNo");
         if ("00".equals(responseCode)) {
             // Thanh toán thành công
             payment.setPaymentStatus(PaymentStatus.SUCCESS);
             payment.setPaidAt(LocalDateTime.now());
-            payment.setProviderTransactionId(params.get("vnp_TransactionNo"));
+            if (transactionNo != null && !transactionNo.isBlank()) {
+                payment.setProviderTransactionId(transactionNo);
+            }
             paymentRepository.save(payment);
 
-            // Đây là nơi DUY NHẤT trong toàn bộ hệ thống Order được chuyển sang CONFIRMED
             OrderEntity order = payment.getOrder();
-            order.setStatus(OrderStatus.CONFIRMED);
-            orderRepository.save(order);
-            emailService.sendPaymentSuccessEmail(order.getUser().getEmail(), order.getId());
+            if (order != null) {
+                if (order.getStatus() == OrderStatus.PENDING) {
+                    order.setStatus(OrderStatus.CONFIRMED);
+                    orderRepository.save(order);
+                    try {
+                        emailService.sendPaymentSuccessEmail(order.getUser().getEmail(), order.getId());
+                    } catch (Exception e) {
+                        log.error("Failed to send payment success email via IPN: ", e);
+                    }
+                } else if (order.getStatus() == OrderStatus.CANCELLED) {
+                    log.warn("⚠️ VNPay IPN received SUCCESS for CANCELLED order {}. Stock may need manual review.", order.getId());
+                }
+            }
         } else {
             // Thanh toán thất bại
             payment.setPaymentStatus(PaymentStatus.FAILED);
@@ -190,17 +202,23 @@ public class PaymentServiceImpl implements PaymentService {
             if ("00".equals(responseCode)) {
                 payment.setPaymentStatus(PaymentStatus.SUCCESS);
                 payment.setPaidAt(LocalDateTime.now());
-                payment.setProviderTransactionId(vnpTransactionNo);
+                if (vnpTransactionNo != null && !vnpTransactionNo.isBlank()) {
+                    payment.setProviderTransactionId(vnpTransactionNo);
+                }
                 paymentRepository.save(payment);
 
                 OrderEntity order = payment.getOrder();
-                if (order != null && order.getStatus() == OrderStatus.PENDING) {
-                    order.setStatus(OrderStatus.CONFIRMED);
-                    orderRepository.save(order);
-                    try {
-                        emailService.sendPaymentSuccessEmail(order.getUser().getEmail(), order.getId());
-                    } catch (Exception e) {
-                        log.error("Failed to send payment success email: ", e);
+                if (order != null) {
+                    if (order.getStatus() == OrderStatus.PENDING) {
+                        order.setStatus(OrderStatus.CONFIRMED);
+                        orderRepository.save(order);
+                        try {
+                            emailService.sendPaymentSuccessEmail(order.getUser().getEmail(), order.getId());
+                        } catch (Exception e) {
+                            log.error("Failed to send payment success email via Return: ", e);
+                        }
+                    } else if (order.getStatus() == OrderStatus.CANCELLED) {
+                        log.warn("⚠️ VNPay Return received SUCCESS for CANCELLED order {}.", order.getId());
                     }
                 }
             } else {

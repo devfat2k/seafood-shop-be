@@ -23,11 +23,14 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     List<OrderEntity> findAllByUserIdAndStatus(@Param("userId") Long userId, @Param("status") OrderStatus status);
 
 
-    @Query("SELECT DISTINCT o FROM OrderEntity o " +
+    @Query(value = "SELECT DISTINCT o FROM OrderEntity o " +
             "JOIN FETCH o.user " +
             "LEFT JOIN FETCH o.items " +
             "WHERE o.user.id = :userId" +
-            " AND o.status = :status")
+            " AND (:status IS NULL OR o.status = :status)",
+           countQuery = "SELECT COUNT(o) FROM OrderEntity o " +
+            "WHERE o.user.id = :userId" +
+            " AND (:status IS NULL OR o.status = :status)")
     Page<OrderEntity> findByUserIdAndStatusWithDetails(@Param("userId") Long userId, @Param("status") OrderStatus status, Pageable pageable);
 
 

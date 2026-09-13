@@ -25,7 +25,7 @@ public class AdminProductController {
             summary = "Admin - Create product",
             description = "Create a new product using the request body."
     )
-    @PreAuthorize("hasAuthority('product:create')")
+    @PreAuthorize("hasAuthority('PRODUCT_CREATE') or hasRole('ADMIN')")
     @PostMapping()
     public ResponseEntity<ApiResponse<ProductResponseDto>> createProduct(
             @Valid @RequestBody() CreateProductRequestDto createProductRequest
@@ -41,7 +41,7 @@ public class AdminProductController {
             summary = "Admin - Update product",
             description = "Update one or more product fields. Only provided fields will be updated."
     )
-    @PreAuthorize("hasAuthority('product:update')")
+    @PreAuthorize("hasAuthority('PRODUCT_UPDATE') or hasRole('ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<ProductResponseDto>> updateProduct(
             @PathVariable Long id,
@@ -58,7 +58,7 @@ public class AdminProductController {
             summary = "Admin - Soft delete product",
             description = "Mark the product as inactive."
     )
-    @PreAuthorize("hasAuthority('product:delete')")
+    @PreAuthorize("hasAuthority('PRODUCT_DELETE') or hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Boolean>> deleteProduct(
             @PathVariable Long id

@@ -34,6 +34,7 @@ public class UserServiceImpl implements UserService {
     private final StorageService storageService;
     private final OtpService otpService;
     private final UserMapper userMapper;
+    private final UserPermissionCacheService userPermissionCacheService;
 
 
     @Override
@@ -107,6 +108,7 @@ public class UserServiceImpl implements UserService {
         }
         user.setActive(isActive);
         userRepository.save(user);
+        userPermissionCacheService.evictUserPermissions(idInQuery);
     }
 
     @Override

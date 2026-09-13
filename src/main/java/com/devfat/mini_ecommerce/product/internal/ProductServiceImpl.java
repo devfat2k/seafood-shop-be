@@ -178,7 +178,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    @CacheEvict(value = "products", key = "#id")
+    @CacheEvict(value = {"products", "product:category_browse", "home:featuredProducts", "home:comboSets"}, allEntries = true)
     @Transactional
     public ProductResponseDto uploadProductImage(Long id, MultipartFile file) {
        ProductEntity product = productRepository.findById(id)

@@ -139,6 +139,7 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingAddress(defaultAddress.get());
         order.setShippingAddressSnapshot(snapShotAddress);
         order.setPaymentMethod(createOrderRequestDto.paymentMethod());
+        order.setNote(createOrderRequestDto.note());
 
         /**
          * Lặp qua từng item trong request.items()
